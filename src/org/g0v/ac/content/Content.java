@@ -9,7 +9,10 @@ public class Content
 	
 	public Content()
 	{
-		
+		this.content = "";
+		this.date = "";
+		this.tag = "";
+		this.comment = "";
 	}
 	
 	public void setContent(String content)
@@ -27,6 +30,11 @@ public class Content
 		this.date = date;
 	}
 	
+	public void setComment(String comment)
+	{
+		this.comment = comment;
+	}
+	
 	public String getDate()
 	{
 		return this.date;
@@ -40,6 +48,11 @@ public class Content
 	public String getTag()
 	{
 		return this.tag;
+	}
+	
+	public String getComment()
+	{
+		return this.comment;
 	}
 
 }
