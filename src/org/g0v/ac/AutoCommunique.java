@@ -7,6 +7,8 @@ import java.io.IOException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
+import org.g0v.ac.resolve.Resolve;
+
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -43,8 +45,11 @@ public class AutoCommunique
 		for(int i = 0; i < COMMUNIQUES_URI.length; i++)
 		{
 			WebResource service = client.resource(
-					UriBuilder.fromUri(COMMUNIQUES_URI[i]).build());			
-			System.out.println(service.accept(MediaType.APPLICATION_JSON).get(String.class));
+					UriBuilder.fromUri(COMMUNIQUES_URI[i]).build());
+			String communiqueText = service.accept(MediaType.APPLICATION_JSON).get(String.class);
+			System.out.println(communiqueText);
+			Resolve resolveText = new Resolve(communiqueText);
+			resolveText.run();
 		}
 		
 	}
@@ -90,7 +95,7 @@ public class AutoCommunique
 			COMMUNIQUES_URI = new String[tmpuri.length];
 			for(int i = 0; i < tmpuri.length; i++)
 			{
-				COMMUNIQUES_URI[i] = String.format("https://g0v.hackpad.com/api/1.0/pad/%s/content/latest.md", tmpuri[i]);
+				COMMUNIQUES_URI[i] = String.format("https://g0v.hackpad.com/api/1.0/pad/%s/content/latest.html", tmpuri[i]);
 			}
 			
 		}

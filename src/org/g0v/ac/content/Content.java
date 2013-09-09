@@ -5,6 +5,7 @@ public class Content
 	private String content;
 	private String date;
 	private String tag;
+	private String comment;
 	
 	public Content()
 	{
