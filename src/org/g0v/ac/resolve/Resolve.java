@@ -10,11 +10,10 @@ public class Resolve
 	private String text;
 	private List<Content> content;
 	private String[] communiqueLine;
-	private String[] entries;
 	
 	public Resolve(String text)
 	{
-		content = new ArrayList<Content>();
+		this.content = new ArrayList<Content>();
 		this.text = text;
 	}
 	
@@ -28,22 +27,37 @@ public class Resolve
 			if(communiqueLine[i].startsWith("<p><b>"))
 			{
 				String date = communiqueLine[i].substring(6, communiqueLine[i].indexOf("</b></p>"));
-				System.out.println(date);	
+//				System.out.println(date);	
 				int j = i;
-				String tmpLine = communiqueLine[j].substring(communiqueLine[j].indexOf("<li>"));
+				String tmpLine = "";
+				
+				while(j < communiqueLine.length)
+				{
+					if(communiqueLine[j].indexOf("<ul><li>") >= 0)
+					{
+						tmpLine = communiqueLine[j].substring(communiqueLine[j].indexOf("<li>"));
+						System.out.println(tmpLine);
+						break;
+					}
+					j++;
+				}
 				
 				while(j < communiqueLine.length)
 				{
 					if(communiqueLine[j].equals(""))
 					{
-						System.out.println("next date");
+//						System.out.println("next date");
 						break;
 					}
 					Content tmpContent = new Content();
 					tmpContent.setDate(date);
 					
-					if(tmpLine.startsWith("<li>"))
+					if(tmpLine.startsWith("<li>") || tmpLine.startsWith("<ul><li>"))
 					{
+						if(tmpLine.startsWith("<ul><li>"))
+						{
+							tmpLine = tmpLine.substring(4);
+						}
 						int end = 0;
 						end = getLineEnd(tmpLine);
 //						System.out.println(tmpLine.lastIndexOf("#", end) + " " + end + " " + tmpLine);
@@ -52,6 +66,9 @@ public class Resolve
 							String tmpTag = tmpLine.substring(tmpLine.lastIndexOf("#", end), end);
 //							System.out.println(tmpTag);
 							tmpContent.setTag(tmpTag);
+							String tmpCon = tmpLine.substring(0, tmpLine.lastIndexOf("#", end));
+//							System.out.println(tmpCon);
+							tmpContent.setContent(tmpCon);
 						}
 
 					}
@@ -98,16 +115,25 @@ public class Resolve
 					
 					if(commentLine >= 0)
 					{
-						System.out.println(tmpContent.getComment());
+//						System.out.println(tmpContent.getComment());
 						j = commentLine;
 					}
 					
 					j++;
+					if(!tmpContent.getTag().equals(""))
+					{
+						content.add(tmpContent);						
+					}
 					tmpLine = communiqueLine[j];
 				}
 				i = j;
 			}
 			i++;
+		}
+		
+		for(int k = 0; k < content.size(); k++)
+		{
+			System.out.println(content.get(k).toString());
 		}
 		
 	}
@@ -130,10 +156,9 @@ public class Resolve
 		}
 	}
 	
-	public int getLineTag(String line)
+	public void setText(String text)
 	{
-		
-		return 1;
+		this.text = text;
 	}
 	
 	public String[] getCommuniqueLine()
@@ -144,11 +169,6 @@ public class Resolve
 	public List<Content> getContent()
 	{
 		return this.content;
-	}
-	
-	public String[] getEntries()
-	{
-		return this.entries;
 	}
 
 }

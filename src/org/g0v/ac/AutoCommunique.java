@@ -3,10 +3,13 @@ package org.g0v.ac;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
+import org.g0v.ac.content.Content;
 import org.g0v.ac.resolve.Resolve;
 
 import com.sun.jersey.api.client.Client;
@@ -24,11 +27,13 @@ public class AutoCommunique
 	private String CLIENT_ID;
 	private String SECRET;
 	private String[] COMMUNIQUES_URI;
+	private List<Content> content;
 	private static final String API_KEYS_FILE = "api_key.txt";
 	private static final String COMMUNIQUES_FILE = "communiques.txt";
 	
 	public AutoCommunique()
 	{
+		this.content = new ArrayList<Content>();
 		setApiKey();
 		setCommuniqueUri();
 	}
@@ -50,6 +55,7 @@ public class AutoCommunique
 			System.out.println(communiqueText);
 			Resolve resolveText = new Resolve(communiqueText);
 			resolveText.run();
+			content.addAll(resolveText.getContent());
 		}
 		
 	}

@@ -54,5 +54,10 @@ public class Content
 	{
 		return this.comment;
 	}
+	
+	public String toString()
+	{
+		return String.format("%s %s %s %s", this.date, this.tag, this.content, this.comment);
+	}
 
 }
