@@ -6,11 +6,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 import org.g0v.ac.content.Content;
 import org.g0v.ac.resolve.Resolve;
 
@@ -30,12 +34,16 @@ public class AutoCommunique
 	private String SECRET;
 	private String[] COMMUNIQUES_URI;
 	private List<Content> content;
+	private String padContent;
+	private String title;
 	private static final String API_KEYS_FILE = "api_key.txt";
 	private static final String COMMUNIQUES_FILE = "communiques.txt";
+	private static final String TITLE_FILE = "title.txt";
 	
 	public AutoCommunique()
 	{
 		this.content = new ArrayList<Content>();
+		padContent = "";
 		setApiKey();
 		setCommuniqueUri();
 	}
@@ -51,9 +59,9 @@ public class AutoCommunique
 		client.addFilter(filter);
 		for(int i = 0; i < COMMUNIQUES_URI.length; i++)
 		{
-			WebResource service = client.resource(
+			WebResource serviceGET = client.resource(
 					UriBuilder.fromUri(COMMUNIQUES_URI[i]).build());
-			String communiqueText = service.accept(MediaType.APPLICATION_JSON).get(String.class);
+			String communiqueText = serviceGET.accept(MediaType.APPLICATION_JSON).get(String.class);
 //			System.out.println(communiqueText);
 			Resolve resolveText = new Resolve(communiqueText);
 			resolveText.run();
@@ -62,9 +70,55 @@ public class AutoCommunique
 		sortContent();
 		for(Content o: content)
 		{
-			System.out.println(o.toString());
+			//System.out.println(o.toString());
+		}
+		setTitle();
+		setPadContent();
+		
+		WebResource servicePOST = client.resource(UriBuilder.fromUri("https://g0v.hackpad.com/api/1.0/pad/create").build());			
+		String json = servicePOST.accept(MediaType.APPLICATION_JSON).header("Content-Type", "text/plain").post(String.class, title);
+		System.out.println(json);
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, String> map = new LinkedHashMap<String, String>();
+		try
+		{
+			map = mapper.readValue(json, new TypeReference<Map<String, String>>(){});	
+			System.out.println(map.get("padId").toString());
+			
+		}
+		catch (IOException e)
+		{
+			System.out.println(e.toString());
 		}
 		
+		String updatepad = String.format("https://g0v.hackpad.com/api/1.0/pad/%s/content", map.get("padId").toString());
+		WebResource service = client.resource(UriBuilder.fromUri(updatepad).build());
+		System.out.println(service.accept(MediaType.APPLICATION_JSON).header("Content-Type", "text/html").post(String.class, padContent));
+	}
+	
+	public void setPadContent()
+	{
+		padContent += title; 
+		String tmpTag = content.get(0).getTag();
+		String tmpHeader = String.format("<p><b>%s</b></p><ul>", content.get(0).getTag());
+		String tmpLine = "";
+		tmpLine = String.format("<li>%s %s %s</li> \n", content.get(0).getDate(), content.get(0).getContent().substring(4), content.get(0).getComment());
+		padContent += tmpHeader + tmpLine;
+		for(int i = 1; i < content.size(); i++)
+		{
+			if(!tmpTag.equals(content.get(i).getTag()))
+			{
+				tmpHeader = String.format("</ul><p></p><p><b>%s</b></p><ul>", content.get(i).getTag());
+				tmpTag = content.get(i).getTag();
+				padContent += tmpHeader;
+			}
+			else
+			{
+				tmpLine = String.format("<li>%s %s %s</li> \n", content.get(i).getDate(), content.get(i).getContent().substring(4), content.get(i).getComment());
+				padContent += tmpLine;
+			}
+		}
+		//System.out.println(padContent);
 	}
 	
 	public void sortContent()
@@ -88,6 +142,26 @@ public class AutoCommunique
 				return o1.getTag().compareTo(o2.getTag());
 			}
 		});
+	}
+	
+	public void setTitle()
+	{
+		try
+		{
+			FileReader fr = new FileReader(TITLE_FILE);
+			BufferedReader br = new BufferedReader(fr);
+			String line;
+			if((line = br.readLine()) != null)
+			{
+				this.title = line;
+			}
+			br.close();
+			fr.close();
+		}
+		catch(IOException e)
+		{
+			System.out.println(e.toString());
+		}
 	}
 	
 	public void setApiKey()
