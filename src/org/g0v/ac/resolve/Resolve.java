@@ -36,7 +36,7 @@ public class Resolve
 					if(communiqueLine[j].indexOf("<ul><li>") >= 0)
 					{
 						tmpLine = communiqueLine[j].substring(communiqueLine[j].indexOf("<li>"));
-						System.out.println(tmpLine);
+//						System.out.println(tmpLine);
 						break;
 					}
 					j++;
@@ -129,11 +129,6 @@ public class Resolve
 				i = j;
 			}
 			i++;
-		}
-		
-		for(int k = 0; k < content.size(); k++)
-		{
-			System.out.println(content.get(k).toString());
 		}
 		
 	}

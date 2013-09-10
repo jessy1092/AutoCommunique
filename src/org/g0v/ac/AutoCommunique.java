@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.ws.rs.core.MediaType;
@@ -52,12 +54,40 @@ public class AutoCommunique
 			WebResource service = client.resource(
 					UriBuilder.fromUri(COMMUNIQUES_URI[i]).build());
 			String communiqueText = service.accept(MediaType.APPLICATION_JSON).get(String.class);
-			System.out.println(communiqueText);
+//			System.out.println(communiqueText);
 			Resolve resolveText = new Resolve(communiqueText);
 			resolveText.run();
 			content.addAll(resolveText.getContent());
 		}
+		sortContent();
+		for(Content o: content)
+		{
+			System.out.println(o.toString());
+		}
 		
+	}
+	
+	public void sortContent()
+	{
+		Collections.sort(content, new Comparator<Content>() 
+		{
+			@Override
+			public int compare(Content o1, Content o2) 
+			{
+				// TODO Auto-generated method stub
+				return o1.getDate().compareTo(o2.getDate());
+			}
+		});
+		
+		Collections.sort(content, new Comparator<Content>() 
+		{
+			@Override
+			public int compare(Content o1, Content o2) 
+			{
+				// TODO Auto-generated method stub
+				return o1.getTag().compareTo(o2.getTag());
+			}
+		});
 	}
 	
 	public void setApiKey()
