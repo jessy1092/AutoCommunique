@@ -122,6 +122,8 @@ public class Resolve
 					j++;
 					if(!tmpContent.getTag().equals(""))
 					{
+						tmpContent.setContent(tmpContent.getContent().replaceAll("/>", ">"));
+						tmpContent.setComment(tmpContent.getComment().replaceAll("/>", ">"));
 						content.add(tmpContent);						
 					}
 					tmpLine = communiqueLine[j];

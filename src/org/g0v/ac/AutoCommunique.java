@@ -28,6 +28,7 @@ import com.sun.jersey.oauth.signature.OAuthSecrets;
 import com.tumblr.jumblr.JumblrClient;
 import com.tumblr.jumblr.exceptions.JumblrException;
 import com.tumblr.jumblr.types.Blog;
+import com.tumblr.jumblr.types.TextPost;
 import com.tumblr.jumblr.types.User;
 
 
@@ -43,6 +44,7 @@ public class AutoCommunique
 	private String[] COMMUNIQUES_URI;
 	private List<Content> content;
 	private String padContent;
+	private String tumblrContent;
 	private String title;
 	private ClientConfig hackpadConfig;
 	private Client client;
@@ -60,14 +62,14 @@ public class AutoCommunique
 	
 	public void run()
 	{
-//		getCommunique();
-//		sortContent();
+		getCommunique();
+		sortContent();
 		for(Content o: content)
 		{
-//			System.out.println(o.toString());
+			System.out.println(o.toString());
 		}
 		updateCommuniqueToTumblr();
-
+		updateCommuniqueToHackpad();
 	}
 	
 	public void getCommunique()
@@ -119,27 +121,27 @@ public class AutoCommunique
 	
 	public void updateCommuniqueToTumblr()
 	{
+		setTitle();
+		setTumblrContent();
+		
 		// Create a new client
+		JumblrClient clientTrumblr = new JumblrClient(TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET);
+		clientTrumblr.setToken(TUMBLR_TOKEN_KEY, TUMBLR_TOKEN_SECRET);
+		
 		try
 		{
-			JumblrClient client = new JumblrClient(TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET);
-			client.setToken(TUMBLR_TOKEN_KEY, TUMBLR_TOKEN_SECRET);
-			// Write the user's name
-			User user = client.user();
-			System.out.println(user.getName());
-			
-			// And list their blogs
-			for (Blog blog : user.getBlogs()) 
-			{
-				System.out.println("\t" + blog.getTitle());
-			}
+			TextPost post = clientTrumblr.newPost("g0vtw.tumblr.com", TextPost.class);
+			post.setFormat("html");
+			post.setBody(tumblrContent);
+			post.setTitle(title);
+			post.setState("draft");
+			post.save();
 		}
-		catch(JumblrException e)
+		catch (Exception e)
 		{
-			System.out.println(e.getMessage());
+			System.out.println(e.toString());
 		}
-
-
+		
 	}
 	
 	public void setPadContent()
@@ -163,6 +165,27 @@ public class AutoCommunique
 			
 		}
 		//System.out.println(padContent);
+	}
+	
+	public void setTumblrContent()
+	{
+		String tmpTag = content.get(0).getTag();
+		String tmpHeader = String.format("  <p><b>%s</b></p><ul>", content.get(0).getTag().substring(1));
+		String tmpLine = "";
+		tmpLine = String.format("<li>%s %s %s</li> \n", content.get(0).getDate(), content.get(0).getContent().substring(4), content.get(0).getComment());
+		tumblrContent += tmpHeader + tmpLine;
+		for(int i = 1; i < content.size(); i++)
+		{
+			if(!tmpTag.equals(content.get(i).getTag()))
+			{
+				tmpHeader = String.format("</ul><p></p><p><b>%s</b></p><ul>", content.get(i).getTag().substring(1));
+				tmpTag = content.get(i).getTag();
+				tumblrContent += tmpHeader;
+			}
+			tmpLine = String.format("<li>%s %s %s</li> \n", content.get(i).getDate(), content.get(i).getContent().substring(4), content.get(i).getComment());
+			tumblrContent += tmpLine;
+			
+		}
 	}
 	
 	public void sortContent()
