@@ -25,17 +25,27 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.oauth.client.OAuthClientFilter;
 import com.sun.jersey.oauth.signature.OAuthParameters;
 import com.sun.jersey.oauth.signature.OAuthSecrets;
+import com.tumblr.jumblr.JumblrClient;
+import com.tumblr.jumblr.exceptions.JumblrException;
+import com.tumblr.jumblr.types.Blog;
+import com.tumblr.jumblr.types.User;
 
 
 
 public class AutoCommunique 
 {
-	private String CLIENT_ID;
-	private String SECRET;
+	private String HACKPAD_CLIENT_ID;
+	private String HACKPAD_SECRET;
+	private String TUMBLR_CONSUMER_KEY;
+	private String TUMBLR_CONSUMER_SECRET;
+	private String TUMBLR_TOKEN_KEY;
+	private String TUMBLR_TOKEN_SECRET;
 	private String[] COMMUNIQUES_URI;
 	private List<Content> content;
 	private String padContent;
 	private String title;
+	private ClientConfig hackpadConfig;
+	private Client client;
 	private static final String API_KEYS_FILE = "api_key.txt";
 	private static final String COMMUNIQUES_FILE = "communiques.txt";
 	private static final String TITLE_FILE = "title.txt";
@@ -50,31 +60,42 @@ public class AutoCommunique
 	
 	public void run()
 	{
-		ClientConfig config = new DefaultClientConfig();
-		Client client = Client.create(config);
+//		getCommunique();
+//		sortContent();
+		for(Content o: content)
+		{
+//			System.out.println(o.toString());
+		}
+		updateCommuniqueToTumblr();
+
+	}
+	
+	public void getCommunique()
+	{
+		hackpadConfig = new DefaultClientConfig();
+		client = Client.create(hackpadConfig);
 		OAuthClientFilter filter = new OAuthClientFilter(
 				client.getProviders(), 
-				new OAuthParameters().consumerKey(CLIENT_ID), 
-				new OAuthSecrets().consumerSecret(SECRET));		
+				new OAuthParameters().consumerKey(HACKPAD_CLIENT_ID), 
+				new OAuthSecrets().consumerSecret(HACKPAD_SECRET));		
 		client.addFilter(filter);
 		for(int i = 0; i < COMMUNIQUES_URI.length; i++)
 		{
 			WebResource serviceGET = client.resource(
 					UriBuilder.fromUri(COMMUNIQUES_URI[i]).build());
 			String communiqueText = serviceGET.accept(MediaType.APPLICATION_JSON).get(String.class);
-//			System.out.println(communiqueText);
+			//System.out.println(communiqueText);
 			Resolve resolveText = new Resolve(communiqueText);
 			resolveText.run();
 			content.addAll(resolveText.getContent());
 		}
-		sortContent();
-		for(Content o: content)
-		{
-			//System.out.println(o.toString());
-		}
+		
+	}
+	
+	public void updateCommuniqueToHackpad()
+	{
 		setTitle();
 		setPadContent();
-		
 		WebResource servicePOST = client.resource(UriBuilder.fromUri("https://g0v.hackpad.com/api/1.0/pad/create").build());			
 		String json = servicePOST.accept(MediaType.APPLICATION_JSON).header("Content-Type", "text/plain").post(String.class, title);
 		System.out.println(json);
@@ -96,11 +117,36 @@ public class AutoCommunique
 		System.out.println(service.accept(MediaType.APPLICATION_JSON).header("Content-Type", "text/html").post(String.class, padContent));
 	}
 	
+	public void updateCommuniqueToTumblr()
+	{
+		// Create a new client
+		try
+		{
+			JumblrClient client = new JumblrClient(TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET);
+			client.setToken(TUMBLR_TOKEN_KEY, TUMBLR_TOKEN_SECRET);
+			// Write the user's name
+			User user = client.user();
+			System.out.println(user.getName());
+			
+			// And list their blogs
+			for (Blog blog : user.getBlogs()) 
+			{
+				System.out.println("\t" + blog.getTitle());
+			}
+		}
+		catch(JumblrException e)
+		{
+			System.out.println(e.getMessage());
+		}
+
+
+	}
+	
 	public void setPadContent()
 	{
 		padContent += title; 
 		String tmpTag = content.get(0).getTag();
-		String tmpHeader = String.format("<p><b>%s</b></p><ul>", content.get(0).getTag());
+		String tmpHeader = String.format("<p></p><p><b>%s</b></p><ul>", content.get(0).getTag());
 		String tmpLine = "";
 		tmpLine = String.format("<li>%s %s %s</li> \n", content.get(0).getDate(), content.get(0).getContent().substring(4), content.get(0).getComment());
 		padContent += tmpHeader + tmpLine;
@@ -112,11 +158,9 @@ public class AutoCommunique
 				tmpTag = content.get(i).getTag();
 				padContent += tmpHeader;
 			}
-			else
-			{
-				tmpLine = String.format("<li>%s %s %s</li> \n", content.get(i).getDate(), content.get(i).getContent().substring(4), content.get(i).getComment());
-				padContent += tmpLine;
-			}
+			tmpLine = String.format("<li>%s %s %s</li> \n", content.get(i).getDate(), content.get(i).getContent().substring(4), content.get(i).getComment());
+			padContent += tmpLine;
+			
 		}
 		//System.out.println(padContent);
 	}
@@ -171,11 +215,25 @@ public class AutoCommunique
 			FileReader fr = new FileReader(API_KEYS_FILE);
 			BufferedReader br = new BufferedReader(fr);
 			String line;
-			if((line = br.readLine()) != null)
+			for(int i = 0; i < 3; i++)
 			{
+				line = br.readLine();
 				String[] para= line.split(" ");
-				CLIENT_ID = para[0];
-				SECRET = para[1];
+				if(i == 0 && line != null)
+				{
+					HACKPAD_CLIENT_ID = para[0];
+					HACKPAD_SECRET = para[1];
+				}
+				else if(i ==1 && line !=null)
+				{
+					TUMBLR_CONSUMER_KEY = para[0];
+					TUMBLR_CONSUMER_SECRET = para[1];
+				}
+				else if(i ==2 && line !=null)
+				{
+					TUMBLR_TOKEN_KEY = para[0];
+					TUMBLR_TOKEN_SECRET = para[1];
+				}
 			}
 			br.close();
 			fr.close();
