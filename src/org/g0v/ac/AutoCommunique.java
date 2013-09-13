@@ -48,7 +48,7 @@ public class AutoCommunique
 	private String title;
 	private ClientConfig hackpadConfig;
 	private Client client;
-	private static final String API_KEYS_FILE = "api_key.txt";
+	private static final String API_KEYS_FILE = "api_keys.txt";
 	private static final String COMMUNIQUES_FILE = "communiques.txt";
 	private static final String TITLE_FILE = "title.txt";
 	

@@ -11,7 +11,7 @@ AutoCommunique
 
 ##使用方式
 
-* 增加 api_key.txt
+* 增加 api_keys.txt
 	* 第一行為讀取與寫入公報 hackpad，需要 Client ID 與 Secret，在 setting 可以找到。
 	* 第二行為使用tumblr所必需，為 Cunsumer Key 與 Cunsumer Secret。
 	* 第三行為使用tumblr所必需，為 Token Key 與 Token Secret。
