@@ -1,63 +1,50 @@
 package org.g0v.ac;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
-
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.g0v.ac.content.Content;
 import org.g0v.ac.resolve.Resolve;
-
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.oauth.client.OAuthClientFilter;
-import com.sun.jersey.oauth.signature.OAuthParameters;
-import com.sun.jersey.oauth.signature.OAuthSecrets;
-import com.tumblr.jumblr.JumblrClient;
-import com.tumblr.jumblr.exceptions.JumblrException;
-import com.tumblr.jumblr.types.Blog;
-import com.tumblr.jumblr.types.TextPost;
-import com.tumblr.jumblr.types.User;
-
-
+import org.lee.hackpad.jackpad.JackpadClient;
+import org.lee.hackpad.jackpad.content.Pad;
 
 public class AutoCommunique 
 {
 	private String HACKPAD_CLIENT_ID;
 	private String HACKPAD_SECRET;
-	private String TUMBLR_CONSUMER_KEY;
-	private String TUMBLR_CONSUMER_SECRET;
-	private String TUMBLR_TOKEN_KEY;
-	private String TUMBLR_TOKEN_SECRET;
-	private String[] COMMUNIQUES_URI;
+//	private String TUMBLR_CONSUMER_KEY;
+//	private String TUMBLR_CONSUMER_SECRET;
+//	private String TUMBLR_TOKEN_KEY;
+//	private String TUMBLR_TOKEN_SECRET;
+	private String[] COMMUNIQUES_PADID;
 	private List<Content> content;
-	private String padContent;
-	private String tumblrContent;
-	private String title;
-	private ClientConfig hackpadConfig;
-	private Client client;
+//	private String tumblrContent;
+	private Pad pad;
+	
+	private JackpadClient jackpadClient;
+//	private JumblrClient jumblrClient;
+	
 	private static final String API_KEYS_FILE = "api_keys.txt";
 	private static final String COMMUNIQUES_FILE = "communiques.txt";
 	private static final String TITLE_FILE = "title.txt";
+	private static final String OUTPUT_FILE = "pads.txt";
 	
 	public AutoCommunique()
 	{
 		this.content = new ArrayList<Content>();
-		padContent = "";
+		pad = new Pad();
+		pad.setSite("g0v");
+		pad.setContentType("text/html");
 		setApiKey();
-		setCommuniqueUri();
+		setCommuniquePadID();
+		jackpadBuild();
 	}
 	
 	public void run()
@@ -68,24 +55,28 @@ public class AutoCommunique
 		{
 			System.out.println(o.toString());
 		}
-		updateCommuniqueToTumblr();
+//		updateCommuniqueToTumblr();
 		updateCommuniqueToHackpad();
 	}
 	
+	public void jackpadBuild()
+	{
+		jackpadClient = new JackpadClient(HACKPAD_CLIENT_ID, HACKPAD_SECRET);
+		jackpadClient.build();
+	}
+	
+	/*public void tumblrBuild()
+	{
+		jumblrClient = new JumblrClient(TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET);
+		jumblrClient.setToken(TUMBLR_TOKEN_KEY, TUMBLR_TOKEN_SECRET);
+	}*/
+	
 	public void getCommunique()
 	{
-		hackpadConfig = new DefaultClientConfig();
-		client = Client.create(hackpadConfig);
-		OAuthClientFilter filter = new OAuthClientFilter(
-				client.getProviders(), 
-				new OAuthParameters().consumerKey(HACKPAD_CLIENT_ID), 
-				new OAuthSecrets().consumerSecret(HACKPAD_SECRET));		
-		client.addFilter(filter);
-		for(int i = 0; i < COMMUNIQUES_URI.length; i++)
+		
+		for(int i = 0; i < COMMUNIQUES_PADID.length; i++)
 		{
-			WebResource serviceGET = client.resource(
-					UriBuilder.fromUri(COMMUNIQUES_URI[i]).build());
-			String communiqueText = serviceGET.accept(MediaType.APPLICATION_JSON).get(String.class);
+			String communiqueText = jackpadClient.getPadContentHTML("g0v", COMMUNIQUES_PADID[i], "latest");
 			//System.out.println(communiqueText);
 			Resolve resolveText = new Resolve(communiqueText);
 			resolveText.run();
@@ -98,28 +89,14 @@ public class AutoCommunique
 	{
 		setTitle();
 		setPadContent();
-		WebResource servicePOST = client.resource(UriBuilder.fromUri("https://g0v.hackpad.com/api/1.0/pad/create").build());			
-		String json = servicePOST.accept(MediaType.APPLICATION_JSON).header("Content-Type", "text/plain").post(String.class, title);
-		System.out.println(json);
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, String> map = new LinkedHashMap<String, String>();
-		try
-		{
-			map = mapper.readValue(json, new TypeReference<Map<String, String>>(){});	
-			System.out.println(map.get("padId").toString());
-			
-		}
-		catch (IOException e)
-		{
-			System.out.println(e.toString());
-		}
 		
-		String updatepad = String.format("https://g0v.hackpad.com/api/1.0/pad/%s/content", map.get("padId").toString());
-		WebResource service = client.resource(UriBuilder.fromUri(updatepad).build());
-		System.out.println(service.accept(MediaType.APPLICATION_JSON).header("Content-Type", "text/html").post(String.class, padContent));
+		String tmpPad = new String();
+		tmpPad = jackpadClient.createPad(pad);
+		System.out.println(tmpPad);
+		outputPadID(tmpPad);
 	}
 	
-	public void updateCommuniqueToTumblr()
+	/*public void updateCommuniqueToTumblr()
 	{
 		setTitle();
 		setTumblrContent();
@@ -142,11 +119,11 @@ public class AutoCommunique
 			System.out.println(e.toString());
 		}
 		
-	}
+	}*/
 	
 	public void setPadContent()
 	{
-		padContent += title; 
+		String padContent = new String(); 
 		String tmpTag = content.get(0).getTag();
 		String tmpHeader = String.format("<p></p><p><b>%s</b></p><ul>", content.get(0).getTag());
 		String tmpLine = "";
@@ -164,10 +141,11 @@ public class AutoCommunique
 			padContent += tmpLine;
 			
 		}
-		//System.out.println(padContent);
+		pad.setContent(padContent);
+		System.out.println(padContent);
 	}
 	
-	public void setTumblrContent()
+	/*public void setTumblrContent()
 	{
 		String tmpTag = content.get(0).getTag();
 		String tmpHeader = String.format("  <p><b>%s</b></p><ul>", content.get(0).getTag().substring(1));
@@ -186,7 +164,7 @@ public class AutoCommunique
 			tumblrContent += tmpLine;
 			
 		}
-	}
+	}*/
 	
 	public void sortContent()
 	{
@@ -217,10 +195,10 @@ public class AutoCommunique
 		{
 			FileReader fr = new FileReader(TITLE_FILE);
 			BufferedReader br = new BufferedReader(fr);
-			String line;
+			String line = new String();
 			if((line = br.readLine()) != null)
 			{
-				this.title = line;
+				pad.setTitle(line);
 			}
 			br.close();
 			fr.close();
@@ -247,16 +225,16 @@ public class AutoCommunique
 					HACKPAD_CLIENT_ID = para[0];
 					HACKPAD_SECRET = para[1];
 				}
-				else if(i ==1 && line !=null)
-				{
-					TUMBLR_CONSUMER_KEY = para[0];
-					TUMBLR_CONSUMER_SECRET = para[1];
-				}
-				else if(i ==2 && line !=null)
-				{
-					TUMBLR_TOKEN_KEY = para[0];
-					TUMBLR_TOKEN_SECRET = para[1];
-				}
+//				else if(i ==1 && line !=null)
+//				{
+//					TUMBLR_CONSUMER_KEY = para[0];
+//					TUMBLR_CONSUMER_SECRET = para[1];
+//				}
+//				else if(i ==2 && line !=null)
+//				{
+//					TUMBLR_TOKEN_KEY = para[0];
+//					TUMBLR_TOKEN_SECRET = para[1];
+//				}
 			}
 			br.close();
 			fr.close();
@@ -267,7 +245,7 @@ public class AutoCommunique
 		}
 	}
 	
-	public void setCommuniqueUri()
+	public void setCommuniquePadID()
 	{
 		try
 		{
@@ -275,25 +253,37 @@ public class AutoCommunique
 			BufferedReader br = new BufferedReader(fr);
 			String line;
 			String tmpCom = "";
-			String[] tmpuri;
 			while((line = br.readLine()) != null)
 			{
 				tmpCom += line + " ";
 			}
 			br.close();
 			fr.close();
-			tmpuri = tmpCom.split(" ");
-			COMMUNIQUES_URI = new String[tmpuri.length];
-			for(int i = 0; i < tmpuri.length; i++)
-			{
-				COMMUNIQUES_URI[i] = String.format("https://g0v.hackpad.com/api/1.0/pad/%s/content/latest.html", tmpuri[i]);
-			}
+			COMMUNIQUES_PADID = tmpCom.split(" ");
 			
 		}
 		catch(IOException e)
 		{
 			System.out.println(e.toString());
 		}
+	}
+	
+	public void outputPadID(String PadID)
+	{
+		try
+		{
+			FileWriter fw = new FileWriter(OUTPUT_FILE);
+			BufferedWriter bw = new BufferedWriter(fw);
+			bw.write(PadID);
+			bw.newLine();
+			bw.close();
+			fw.close();
+		}
+		catch (IOException e)
+		{
+			System.out.println(e.toString());
+		}
+		
 	}
 	
 	public static void main(String[] args) 

@@ -23,9 +23,10 @@ public class Resolve
 		int i = 0;
 		while(i < communiqueLine.length)
 		{
-//			System.out.println(communiqueLine[i]);
-			if(communiqueLine[i].startsWith("<p><b>"))
+			System.out.println(communiqueLine[i]);
+			if(communiqueLine[i].indexOf("<p><b>") >= 0)
 			{
+				communiqueLine[i] = communiqueLine[i].substring(communiqueLine[i].indexOf("<p><b>"));
 				String date = communiqueLine[i].substring(6, communiqueLine[i].indexOf("</b></p>"));
 //				System.out.println(date);	
 				int j = i;
@@ -63,7 +64,11 @@ public class Resolve
 //						System.out.println(tmpLine.lastIndexOf("#", end) + " " + end + " " + tmpLine);
 						if(tmpLine.lastIndexOf("#", end) > 0)
 						{
-							String tmpTag = tmpLine.substring(tmpLine.lastIndexOf("#", end), end);
+							String tmpTag = tmpLine.substring(tmpLine.lastIndexOf("#", end) + 1, end);
+							if(tmpTag.indexOf("</") >= 0)
+							{
+								tmpTag = tmpTag.substring(0, tmpTag.indexOf("</"));
+							}
 //							System.out.println(tmpTag);
 							tmpContent.setTag(tmpTag);
 							String tmpCon = tmpLine.substring(0, tmpLine.lastIndexOf("#", end));

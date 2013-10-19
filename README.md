@@ -18,14 +18,14 @@ AutoCommunique
 * 增加 communiques.txt，為每週公報的 padid 。
 * 增加 title.txt 設置每月公報的標題。
 
-##使用的jar
+##Output 
 
-* [jdk 1.7](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
-* [jersey-1.17.1](http://jersey.java.net/index.html)
-* [oauth-client-1.17.1](http://mvnrepository.com/artifact/com.sun.jersey.contribs.jersey-oauth/oauth-client)
-* [oauth-signature-1.17.1](http://mvnrepository.com/artifact/com.sun.jersey.contribs.jersey-oauth/oauth-signature)
-* [jackson-all-1.9.11](http://wiki.fasterxml.com/JacksonDownload)
-* [jumblr-0.0.6](https://github.com/tumblr/jumblr)
-* [gson-2.2.4](https://code.google.com/p/google-gson/downloads/detail?name=google-gson-2.2.4-release.zip&can=2&q=)
-* [scribe-1.3.5](http://mvnrepository.com/artifact/org.scribe/scribe/1.3.5)
+* 產生 pads.txt 裡面為月份公報的 Pad ID
 
+#Maven
+
+* Using Hackpad Java API - [Jackpad](https://github.com/jessy1092/jackpad)
+
+#License
+
+The code is available at github project under [MIT License](https://github.com/jessy1092/AutoCommunique/blob/master/LICENSE)
