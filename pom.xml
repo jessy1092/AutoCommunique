@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.g0v.ac.autocommunique</groupId>
   <artifactId>AutoCommunique</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2</version>
   <name>AutoCommunique</name>
   <description>Auto convert Week Communique to Month Communique</description>
   <build>
