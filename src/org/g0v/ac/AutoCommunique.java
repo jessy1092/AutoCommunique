@@ -36,6 +36,8 @@ public class AutoCommunique
 	private static final String TITLE_FILE = "title.txt";
 	private static final String OUTPUT_FILE = "pads.txt";
 	
+	private static String ptitle="";
+	
 	public AutoCommunique()
 	{
 		this.content = new ArrayList<Content>();
@@ -46,7 +48,17 @@ public class AutoCommunique
 		setCommuniquePadID();
 		jackpadBuild();
 	}
-	
+	public AutoCommunique(String cid, String s,String pid, String title) {
+		HACKPAD_CLIENT_ID = cid;
+		HACKPAD_SECRET = s;
+		COMMUNIQUES_PADID = pid.split("\\n");
+		ptitle = title;
+		this.content = new ArrayList<Content>();
+		pad = new Pad();
+		pad.setSite("g0v");
+		pad.setContentType("text/html");
+		jackpadBuild();
+	}
 	public void run()
 	{
 		getCommunique();
@@ -87,7 +99,8 @@ public class AutoCommunique
 	
 	public void updateCommuniqueToHackpad()
 	{
-		setTitle();
+		if(ptitle !="") pad.setTitle(ptitle); 
+		else setTitle();
 		setPadContent();
 		
 		String tmpPad = new String();
@@ -216,7 +229,7 @@ public class AutoCommunique
 			FileReader fr = new FileReader(API_KEYS_FILE);
 			BufferedReader br = new BufferedReader(fr);
 			String line;
-			for(int i = 0; i < 3; i++)
+			for(int i = 0; i < 1; i++)
 			{
 				line = br.readLine();
 				String[] para= line.split(" ");
